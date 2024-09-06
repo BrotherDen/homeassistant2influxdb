@@ -76,7 +76,7 @@ def convert_to_line_protocol(event):
                 fields.append(f"{key}={value}")
 
     for key, value in state.attributes.items():
-        # Заменяем пробелы на подчеркивания в именах тегов
+        # Replace spaces with underscores in tag names
         if key not in ('device_class', 'state_class', 'icon'):
             key = key.replace(" ", "_")
             '''
@@ -92,10 +92,10 @@ def convert_to_line_protocol(event):
                 value = value.replace(" ", "_")
             tags.append(f"{key}={value}")
 
-    # Добавляем основное значение состояния в поля
+    # Add the main state value to the fields
     fields.append(f"value={state.state}")
 
-    # Собираем финальную строку
+    # Putting together the final line
     line = f"{measurement},{','.join(tags)} {','.join(fields)} {timestamp}"
 
     return line
@@ -136,7 +136,7 @@ def main():
                         help='do all work except writing to InfluxDB or VictoriaMetrics')
     parser.add_argument('--victoria-url', '-v',
                         dest='victoria_url', action='store', required=True,
-                        help='VictoriaMetrics write URL, e.g., http://localhost:8428/write')
+                        help='VictoriaMetrics write URL, e.g., http://localhost:8428')
 
     args = parser.parse_args()
 
@@ -144,14 +144,14 @@ def main():
     args = argparse.Namespace(
         type = 'MariaDB',
         db = 'victoria',
-        user = 'hass',
-        password = 'hass',
+        user = 'root',
+        password = 'root',
         table = 'states',
         host = '127.0.0.1',
         database = 'homeassistant',
         row_count = 0,
         dry = None,
-        victoria_url = 'http://127.0.0.1:8428'
+        victoria_url = 'http://localhost:8428'
     )
 
 
@@ -223,7 +223,7 @@ def main():
                 for row in cursor:
 
                     if row_counter >= total:
-                        print(f"Лимит обработанных строк ({total}) достигнут.")
+                        print(f"Limit of processed lines ({total}) achieved.")
                         #break
 
 
@@ -346,8 +346,7 @@ def formulate_sql_query(table: str, arg_tables: str, total: int):
             inset_query = f"{sql_query}" + \
                 f"\n         AND statistics.start_ts < (select min(events.time_fired_ts) as datetetime_start from events)"
         else:
-            # inset_query = "\n         AND statistics.start_ts < 1708837680"
-            inset_query = "\n         AND statistics.start_ts > 1630894088"
+            inset_query = "\n         AND statistics.start_ts < 1708837680"            
             # start 25.2. 6:10 MEZ = 1708837680
         sql_query = f"""
         SELECT statistics_meta.statistic_id,
